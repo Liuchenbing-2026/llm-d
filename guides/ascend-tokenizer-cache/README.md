@@ -104,3 +104,26 @@ Public offline checks cover launcher argument preservation, invalid budgets,
 installed-file mismatch and complete-ID comparison failure. These checks do
 not substitute for native Router builds, real backend conformance, cluster
 tests, generation/eviction recovery or P/D acceptance.
+
+## Native render and serving conformance (2026-10-10)
+
+`verify_serving.py` supplements `/tokenize` checks with the actual chat-render
+protocol and, with `--serve`, generation request ingress. It compares complete
+OFF/ON token IDs, repetition, growing conversations, Unicode, tenant salts and
+tools. Serving must return the same `prompt_token_ids` and prompt usage.
+
+```bash
+python3 -m unittest -v test_example.py test_serving.py
+python3 verify_serving.py --baseline http://127.0.0.1:8000 \
+  --cached http://127.0.0.1:8001 --model local-model --rounds 3 --serve \
+  --output render-serving-conformance.json
+```
+
+`BACKEND_API_KEY`, if required, is read from the environment. Never commit it.
+The six harness tests use local HTTP fixture servers, not an inference model.
+The serving command requires prepared OFF/ON backends and is **not executed**
+on NPU in this delivery. Output timing is diagnostic only; the harness does not
+measure generation quality, inference throughput, or full Agent success.
+Generation text hashes are recorded without treating nondeterministic text as
+a tokenizer-equivalence failure. Real workload evaluation must use held-out
+Agent tasks and include retries, failures, complete latency and total cost.
